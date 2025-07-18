@@ -1,3 +1,6 @@
+require("dotenv").config();
+
+const { WAIT_TIME } = process.env;
 const pinCache = new Map();
 
 function generatePin() {
@@ -6,7 +9,7 @@ function generatePin() {
 
 function cachePin(userId, pin) {
   pinCache.set(userId, pin);
-  setTimeout(() => pinCache.delete(userId), 1 * 60 * 1000); 
+  setTimeout(() => pinCache.delete(userId), WAIT_TIME); 
 }
 
 function getPin(userId) {

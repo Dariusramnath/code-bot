@@ -1,54 +1,75 @@
 const { Events, EmbedBuilder, MessageFlags } = require("discord.js");
 const { generatePin, cachePin, getPin } = require("../utils/pinManager");
+const {
+  storePinInMongo,
+  findPinByUserId,
+  expirePin,
+} = require("../db/pinService");
 const wait = require("node:timers/promises").setTimeout;
+require("dotenv").config();
+const { WAIT_TIME } = process.env;
 
 module.exports = {
   name: Events.InteractionCreate,
   async execute(interaction) {
-    // Handle button interactions
+
     if (interaction.isButton()) {
       if (interaction.customId !== "link_account") return;
 
       const userId = interaction.user.id;
       const pin = generatePin();
-      cachePin(userId, pin);
-      console.log(
-        `Generated pin for ${interaction.user.username}: ${getPin(userId)}`
-      );
-
-      const embed = new EmbedBuilder()
-        .setTitle(`${interaction.user.username}`)
-        .setDescription(`Here's your pin!\n**${pin}**`)
-        .setColor(0x00ae86);
 
       try {
+        await storePinInMongo(userId, pin); 
+
+        console.log(`Generated pin for ${interaction.user.username}: ${pin}`);
+
+        const embed = new EmbedBuilder()
+          .setTitle(`${interaction.user.username}`)
+          .setDescription(`Here's your pin!\n**${pin}**`)
+          .setColor(0x00ae86);
+
         await interaction.reply({
           embeds: [embed],
           flags: MessageFlags.Ephemeral,
         });
 
-        await wait(1 * 60 * 1000);
-        console.log("Timeout reached, checking pin expiration...");
-        console.log(`Pin for ${interaction.user.username} is: ${getPin(userId)}`);
+        setTimeout(async () => {
+          console.log("Timeout reached, checking pin expiration...");
 
-        // Expire the pin after 5 minutes
-        if (!getPin(userId)) {
+          const existingPin = await findPinByUserId(interaction.user.id);
+
+          if (existingPin) {
+            await expirePin(interaction.user.id);
+            console.log(
+              `Pin for ${interaction.user.username} expired and removed.`
+            );
+          }
+
           const expiredEmbed = new EmbedBuilder()
             .setTitle(`${interaction.user.username}`)
             .setDescription("❌ Your pin expired, click the button again.")
             .setColor(0xff0000);
+
           try {
             await interaction.editReply({
               embeds: [expiredEmbed],
+              components: [], 
             });
           } catch (e) {
             console.warn(
-              `Could not send expiration message to ${interaction.user.username}`
+              `Could not edit reply to show expiration message for ${interaction.user.username}`,
+              e
             );
           }
-        }
+        }, WAIT_TIME);
       } catch (error) {
-        console.error("Failed to send embed:", error);
+        console.error("Error during pin generation or reply:", error);
+        await interaction.reply({
+          content:
+            "❌ Something went wrong generating your pin. Please try again later.",
+          ephemeral: true,
+        });
       }
 
       return; // Prevent processing as a chat input command
