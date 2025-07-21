@@ -37,7 +37,6 @@ for (const folder of commandFolders) {
   for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
-    // Set a new item in the Collection with the key as the command name and the value as the exported module
     if ("data" in command && "execute" in command) {
       client.commands.set(command.data.name, command);
     } else {
@@ -64,5 +63,15 @@ for (const file of eventFiles) {
   }
 }
 
-// Log in to Discord with your client's token
 client.login(DISCORD_TOKEN);
+
+// ✅ Add fake HTTP server so Render keeps the service alive
+const express = require("express");
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => res.send("Bot is running!"));
+
+app.listen(PORT, () => {
+  console.log(`🌐 Web service listening on port ${PORT}`);
+});
