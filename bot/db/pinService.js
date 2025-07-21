@@ -9,7 +9,7 @@ async function storePinInMongo(discordUserId, pin) {
 }
 
 async function findPinByUserId(discordUserId) {
-  return await Pins.findOne({ discordUserId, isUsed: false });
+  return await Pins.findOne({ discordUserId });
 }
 
 async function findPin(pin) {

@@ -72,7 +72,7 @@ module.exports = {
         });
       }
 
-      return; // Prevent processing as a chat input command
+      return; 
     }
 
     // Handle slash commands

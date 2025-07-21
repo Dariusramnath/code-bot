@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  body-parser:
+    specifier: ^2.2.0
+    version: 2.2.0
   discord.js:
     specifier: ^14.21.0
     version: 14.21.0

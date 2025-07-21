@@ -69,8 +69,14 @@ client.login(DISCORD_TOKEN);
 const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 3000;
+const bodyParser = require("body-parser");
+const apiRouter = require("./api/verifyPin");
+
+app.use(bodyParser.json());
 
 app.get("/", (req, res) => res.send("Bot is running!"));
+
+app.use("/api", apiRouter);
 
 app.listen(PORT, () => {
   console.log(`🌐 Web service listening on port ${PORT}`);
